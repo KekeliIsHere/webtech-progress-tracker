@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal | Web Tech Tracker</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page">
+
+  <main class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="logo-mark">&lt;/&gt;</div>
+        <h1>Web Tech Tracker</h1>
+        <p class="subtitle">Enter your Student ID to resume or initialize your progress.</p>
+      </div>
+
+      <form id="loginForm" novalidate>
+        <div class="form-group">
+          <label for="studentId">Student ID</label>
+          <input 
+            type="text" 
+            id="studentId" 
+            name="studentId" 
+            placeholder="e.g. 45862028" 
+            autocomplete="off"
+            required
+          >
+          <span class="field-hint">Existing IDs load progress. New IDs automatically create a profile.</span>
+        </div>
+
+        <div id="statusMessage" class="status-message" aria-live="polite"></div>
+
+        <button type="submit" id="submitBtn" class="btn btn-primary">
+          <span class="btn-text">Open Tracker</span>
+          <span class="spinner" hidden></span>
+        </button>
+      </form>
+
+      <footer class="auth-footer">
+        <p>Vanilla HTML, CSS &amp; Asynchronous JS Engine</p>
+      </footer>
+    </div>
+  </main>
+
+  <script src="js/auth.js"></script>
+</body>
+</html>

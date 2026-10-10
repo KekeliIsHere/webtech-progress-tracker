@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Web Tech Tracker</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dashboard-page">
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <span class="logo-mark">&lt;/&gt;</span>
+      <span class="brand-title">Course Tracker</span>
+    </div>
+    <div class="nav-user">
+      <div class="user-meta">
+        <span id="userName" class="user-name">Loading...</span>
+        <span id="userId" class="user-id">ID: --------</span>
+      </div>
+      <button id="logoutBtn" class="btn btn-secondary">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="dashboard-container">
+    
+    <!-- Top Analytics Summary Cards -->
+    <section class="analytics-deck">
+      <div class="stat-card">
+        <span class="stat-label">Lessons Completed</span>
+        <div class="stat-value-group">
+          <span id="completedCount" class="stat-number">0</span>
+          <span class="stat-total">/ 30</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-label">Course Progress</span>
+        <div class="stat-value-group">
+          <span id="completionPercentage" class="stat-number">0%</span>
+        </div>
+        <div class="progress-track">
+          <div id="progressBar" class="progress-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-label">Quizzes Unlocked</span>
+        <div class="stat-value-group">
+          <span id="eligibleCount" class="stat-number">0</span>
+          <span class="stat-total">/ 30</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filter & Search Controls -->
+    <section class="controls-bar">
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-filter="all">All (30)</button>
+        <button class="filter-btn" data-filter="eligible">Eligible Only</button>
+        <button class="filter-btn" data-filter="pending">Incomplete</button>
+      </div>
+
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search lesson (e.g. 05)...">
+      </div>
+    </section>
+
+    <!-- Task Table Matrix -->
+    <section class="table-card">
+      <div class="table-wrapper">
+        <table class="tracker-table" id="trackerTable">
+          <thead>
+            <tr>
+              <th class="col-lesson">Lesson</th>
+              <th class="col-task">Reading Quiz</th>
+              <th class="col-task">Lab</th>
+              <th class="col-task">Discussion</th>
+              <th class="col-status">Quiz Eligibility</th>
+            </tr>
+          </thead>
+          <tbody id="trackerTableBody">
+            <!-- Dynamically injected rows via tracker.js -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="js/tracker.js"></script>
+</body>
+</html>
