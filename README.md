@@ -2,6 +2,8 @@
 
 A lightweight, multi-user web application designed to monitor lesson progress, compute task deliverables, and dynamically evaluate terminal quiz eligibility across 30 course lessons.
 
+**Live Application:** [https://kekeliishere.github.io/webtech-progress-tracker/](https://kekeliishere.github.io/webtech-progress-tracker/)
+
 ## Features
 
 - **Asynchronous Authentication & Self-Registration:** Authenticates student IDs asynchronously against a JSON data store using `fetch()` and Promises. Automatically creates and persists new profiles when an unknown ID is provided.
