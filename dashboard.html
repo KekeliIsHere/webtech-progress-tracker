@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard | Web Tech Tracker</title>
+  <title>Progress Tracker</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="dashboard-page">
 
-  <!-- Navigation Bar -->
+  <!-- Navbar -->
   <header class="navbar">
     <div class="nav-brand">
       <span class="logo-mark">&lt;/&gt;</span>
@@ -25,10 +25,10 @@
 
   <main class="dashboard-container">
     
-    <!-- Top Analytics Summary Cards -->
+    <!-- Metrics Deck -->
     <section class="analytics-deck">
       <div class="stat-card">
-        <span class="stat-label">Lessons Completed</span>
+        <span class="stat-label">Completed Lessons</span>
         <div class="stat-value-group">
           <span id="completedCount" class="stat-number">0</span>
           <span class="stat-total">/ 30</span>
@@ -36,7 +36,7 @@
       </div>
 
       <div class="stat-card">
-        <span class="stat-label">Course Progress</span>
+        <span class="stat-label">Overall Completion</span>
         <div class="stat-value-group">
           <span id="completionPercentage" class="stat-number">0%</span>
         </div>
@@ -46,7 +46,7 @@
       </div>
 
       <div class="stat-card">
-        <span class="stat-label">Quizzes Unlocked</span>
+        <span class="stat-label">Eligible for Quiz</span>
         <div class="stat-value-group">
           <span id="eligibleCount" class="stat-number">0</span>
           <span class="stat-total">/ 30</span>
@@ -54,12 +54,13 @@
       </div>
     </section>
 
-    <!-- Filter & Search Controls -->
+    <!-- Toolbar Filters & Search -->
     <section class="controls-bar">
       <div class="filter-buttons">
-        <button class="filter-btn active" data-filter="all">All (30)</button>
-        <button class="filter-btn" data-filter="eligible">Eligible Only</button>
-        <button class="filter-btn" data-filter="pending">Incomplete</button>
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="eligible">Eligible</button>
+        <button class="filter-btn" data-filter="completed">Completed</button>
+        <button class="filter-btn" data-filter="incomplete">Incomplete</button>
       </div>
 
       <div class="search-box">
@@ -67,10 +68,10 @@
       </div>
     </section>
 
-    <!-- Task Table Matrix -->
+    <!-- The 7-Column Table Matrix -->
     <section class="table-card">
       <div class="table-wrapper">
-        <table class="tracker-table" id="trackerTable">
+        <table class="tracker-table">
           <thead>
             <tr>
               <th class="col-lesson">Lesson</th>
@@ -78,10 +79,12 @@
               <th class="col-task">Lab</th>
               <th class="col-task">Discussion</th>
               <th class="col-status">Quiz Eligibility</th>
+              <th class="col-task">Terminal Quiz</th>
+              <th class="col-status">Lesson Status</th>
             </tr>
           </thead>
           <tbody id="trackerTableBody">
-            <!-- Dynamically injected rows via tracker.js -->
+            <!-- Rendered dynamically by tracker.js -->
           </tbody>
         </table>
       </div>

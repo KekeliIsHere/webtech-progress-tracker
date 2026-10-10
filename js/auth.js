@@ -1,113 +1,99 @@
-/**
- * auth.js
- * Asynchronous user check with automatic self-registration.
- */
-
 document.addEventListener("DOMContentLoaded", function () {
   const loginForm = document.getElementById("loginForm");
   const studentIdInput = document.getElementById("studentId");
+  const nameGroup = document.getElementById("nameGroup");
+  const studentNameInput = document.getElementById("studentName");
   const statusMessage = document.getElementById("statusMessage");
   const submitBtn = document.getElementById("submitBtn");
   const btnText = submitBtn.querySelector(".btn-text");
-  const spinner = submitBtn.querySelector(".spinner");
 
-  // Check if session already active
-  const activeUser = localStorage.getItem("activeStudent");
-  if (activeUser) {
-    displayMessage("Session active. Redirecting...", "info");
-    setTimeout(() => {
-      window.location.href = "dashboard.html";
-    }, 500);
-    return;
-  }
+  // Clear any existing active session when visiting the login screen
+  localStorage.removeItem("activeStudent");
+
+  // Reset name input visibility whenever the user modifies the ID field
+  studentIdInput.addEventListener("input", function () {
+    if (!nameGroup.classList.contains("is-hidden")) {
+      nameGroup.classList.add("is-hidden");
+      studentNameInput.value = "";
+      btnText.textContent = "Access Tracker";
+      statusMessage.style.display = "none";
+    }
+  });
 
   loginForm.addEventListener("submit", async function (event) {
     event.preventDefault();
-    const inputId = studentIdInput.value.trim();
+    const id = studentIdInput.value.trim();
+    const name = studentNameInput.value.trim();
 
-    if (inputId === "") {
-      displayMessage("Please enter a valid Student ID.", "error");
+    if (id === "") {
+      showMessage("Please enter your Student ID.", "error");
       studentIdInput.focus();
       return;
     }
 
-    setLoadingState(true);
-    displayMessage("Querying student database...", "info");
-
-    let isSuccess = false;
-
+    // 1. Fetch seed student list asynchronously
+    let seedStudents = [];
     try {
-      // 1. Fetch seed database asynchronously
-      let database = [];
-      try {
-        const response = await fetch("data/students.json");
-        if (response.ok) {
-          database = await response.json();
-        }
-      } catch (err) {
-        console.warn("Could not reach data/students.json seed, falling back to local store.");
+      const response = await fetch("data/students.json");
+      if (response.ok) {
+        seedStudents = await response.json();
       }
+    } catch (err) {
+      console.warn("Could not read students.json, checking local storage only.");
+    }
 
-      // 2. Read local registry override if it exists
-      const localRegistry = JSON.parse(localStorage.getItem("allStudents")) || [];
-      
-      // Merge databases (giving priority to locally saved updates)
-      const mergedMap = new Map();
-      database.forEach(s => mergedMap.set(s.id, s));
-      localRegistry.forEach(s => mergedMap.set(s.id, s));
-      const allStudents = Array.from(mergedMap.values());
+    // 2. Read locally registered new profiles
+    const localStudents = JSON.parse(localStorage.getItem("registeredStudents")) || [];
+    const allStudents = [...seedStudents, ...localStudents];
 
-      // 3. Search for existing student
-      let currentStudent = allStudents.find(s => s.id === inputId);
-
-      if (currentStudent) {
-        displayMessage(`Welcome back, ${currentStudent.name}! Loading data...`, "success");
-      } else {
-        // Auto-create profile if not found
-        currentStudent = {
-          id: inputId,
-          name: `Student ${inputId}`,
-          role: "Student",
-          created: new Date().toISOString()
-        };
-        allStudents.push(currentStudent);
-        localStorage.setItem("allStudents", JSON.stringify(allStudents));
-        displayMessage(`New ID detected. Created profile for ${inputId}!`, "success");
+    // 3. Search for matching student
+    let foundStudent = null;
+    for (let i = 0; i < allStudents.length; i++) {
+      if (allStudents[i].id === id) {
+        foundStudent = allStudents[i];
+        break;
       }
+    }
 
-      // 4. Save session and route to tracker
-      localStorage.setItem("activeStudent", JSON.stringify(currentStudent));
-      isSuccess = true;
-
+    // 4. Branching logic: Existing vs New Student
+    if (foundStudent) {
+      // User exists -> Log in directly
+      localStorage.setItem("activeStudent", JSON.stringify(foundStudent));
+      showMessage(`Welcome back, ${foundStudent.name}! Loading your tracker...`, "success");
       setTimeout(() => {
         window.location.href = "dashboard.html";
-      }, 700);
+      }, 600);
 
-    } catch (error) {
-      console.error("Auth processing failure:", error);
-      displayMessage("An unexpected error occurred. Please try again.", "error");
-    } finally {
-      if (!isSuccess) {
-        setLoadingState(false);
+    } else if (nameGroup.classList.contains("is-hidden")) {
+      // New user step 1 -> Reveal name input field
+      nameGroup.classList.remove("is-hidden");
+      studentNameInput.focus();
+      btnText.textContent = "Register & Enter";
+      showMessage("ID not found in registry. Enter your name to register.", "info");
+
+    } else {
+      // New user step 2 -> Validate name and register
+      if (name === "") {
+        showMessage("Please provide your name to complete registration.", "error");
+        studentNameInput.focus();
+        return;
       }
+
+      const newStudent = { id: id, name: name, role: "Student" };
+      localStudents.push(newStudent);
+      localStorage.setItem("registeredStudents", JSON.stringify(localStudents));
+      localStorage.setItem("activeStudent", JSON.stringify(newStudent));
+
+      showMessage(`Registration complete for ${name}! Initializing fresh tracker...`, "success");
+      setTimeout(() => {
+        window.location.href = "dashboard.html";
+      }, 600);
     }
   });
 
-  function displayMessage(text, type) {
+  function showMessage(text, type) {
     statusMessage.textContent = text;
     statusMessage.className = `status-message status-${type}`;
     statusMessage.style.display = "block";
-  }
-
-  function setLoadingState(isLoading) {
-    if (isLoading) {
-      submitBtn.disabled = true;
-      btnText.textContent = "Processing...";
-      if (spinner) spinner.hidden = false;
-    } else {
-      submitBtn.disabled = false;
-      btnText.textContent = "Open Tracker";
-      if (spinner) spinner.hidden = true;
-    }
   }
 });

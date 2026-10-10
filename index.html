@@ -13,33 +13,45 @@
       <div class="auth-header">
         <div class="logo-mark">&lt;/&gt;</div>
         <h1>Web Tech Tracker</h1>
-        <p class="subtitle">Enter your Student ID to resume or initialize your progress.</p>
+        <p class="subtitle">Enter your 8-digit Student ID to load your coursework matrix.</p>
       </div>
 
       <form id="loginForm" novalidate>
+        <!-- ID Input -->
         <div class="form-group">
           <label for="studentId">Student ID</label>
           <input 
             type="text" 
             id="studentId" 
-            name="studentId" 
             placeholder="e.g. 45862028" 
+            maxlength="8"
             autocomplete="off"
             required
           >
-          <span class="field-hint">Existing IDs load progress. New IDs automatically create a profile.</span>
+          <span class="field-hint">Pre-registered: 45862028, 10492027, 28372028</span>
+        </div>
+
+        <!-- Name Input (Hidden until new ID is entered) -->
+        <div class="form-group is-hidden" id="nameGroup">
+          <label for="studentName">Full Name</label>
+          <input 
+            type="text" 
+            id="studentName" 
+            placeholder="e.g. Kofi Mensah"
+            autocomplete="off"
+          >
+          <span class="field-hint">New ID detected. Please provide your name to register.</span>
         </div>
 
         <div id="statusMessage" class="status-message" aria-live="polite"></div>
 
-        <button type="submit" id="submitBtn" class="btn btn-primary">
-          <span class="btn-text">Open Tracker</span>
-          <span class="spinner" hidden></span>
+        <button type="submit" id="submitBtn" class="btn">
+          <span class="btn-text">Access Tracker</span>
         </button>
       </form>
 
       <footer class="auth-footer">
-        <p>Vanilla HTML, CSS &amp; Asynchronous JS Engine</p>
+        <p>Vanilla HTML, CSS &amp; Asynchronous JS</p>
       </footer>
     </div>
   </main>

@@ -1,21 +1,18 @@
-/**
- * tracker.js
- * Handles data rendering, state updates, event delegation,
- * eligibility criteria, and metric calculation.
- */
-
 document.addEventListener("DOMContentLoaded", function () {
-  // 1. Session Guard
-  const rawSession = localStorage.getItem("activeStudent");
-  if (!rawSession) {
+  // Guard check: Must have an active session
+  const sessionData = localStorage.getItem("activeStudent");
+  if (!sessionData) {
     window.location.href = "index.html";
     return;
   }
-  const currentStudent = JSON.parse(rawSession);
+  const currentStudent = JSON.parse(sessionData);
 
-  // Bind Navbar Identity
+  // Bind student identity to UI
   document.getElementById("userName").textContent = currentStudent.name;
   document.getElementById("userId").textContent = `ID: ${currentStudent.id}`;
+
+  // Unique data key scoped to THIS student
+  const studentStorageKey = `tracker_data_${currentStudent.id}`;
 
   // DOM Elements
   const tableBody = document.getElementById("trackerTableBody");
@@ -27,109 +24,84 @@ document.addEventListener("DOMContentLoaded", function () {
   const searchInput = document.getElementById("searchInput");
   const logoutBtn = document.getElementById("logoutBtn");
 
-  // State Variables
-  const storageKey = `progress_${currentStudent.id}`;
   let currentFilter = "all";
   let searchQuery = "";
-  let lessons = loadLessons();
+  let lessons = loadStudentData();
 
-  // Initial Paint
   render();
 
-  // ----------------------------------------------------
-  // Core Data Functions
-  // ----------------------------------------------------
+  // Load existing data or initialize fresh records
+  function loadStudentData() {
+    const saved = localStorage.getItem(studentStorageKey);
+    if (saved) {
+      return JSON.parse(saved);
+    }
 
-  function generateDefaultLessons() {
-    const list = [];
+    // Default generator
+    const freshData = [];
+    // Demo accounts (like yours) get pre-filled progress; new registrations start blank
+    const isSeedUser = currentStudent.id === "45862028";
+
     for (let i = 1; i <= 30; i++) {
-      const paddedNum = i < 10 ? `0${i}` : `${i}`;
-      // Seed first 8 lessons as completed as seen in spreadsheet
-      const isPastLesson = i <= 8;
-      list.push({
+      const num = i < 10 ? `0${i}` : `${i}`;
+      const defaultState = isSeedUser && i <= 8;
+
+      freshData.push({
         id: i,
-        title: `Lesson ${paddedNum}`,
-        readingQuiz: isPastLesson,
-        lab: isPastLesson,
-        discussion: isPastLesson
+        title: `Lesson ${num}`,
+        readingQuiz: defaultState,
+        lab: defaultState,
+        discussion: defaultState,
+        terminalQuiz: defaultState
       });
     }
-    return list;
+
+    localStorage.setItem(studentStorageKey, JSON.stringify(freshData));
+    return freshData;
   }
 
-  function loadLessons() {
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error("Corrupted local data, re-initializing.");
-      }
-    }
-    const defaults = generateDefaultLessons();
-    saveLessons(defaults);
-    return defaults;
+  function saveStudentData() {
+    localStorage.setItem(studentStorageKey, JSON.stringify(lessons));
   }
 
-  function saveLessons(data) {
-    localStorage.setItem(storageKey, JSON.stringify(data));
+  // Rules
+  function checkEligibility(l) {
+    return Boolean(l.readingQuiz && l.lab && l.discussion);
   }
 
-  /**
-   * Evaluates if a student has unlocked the quiz for a lesson.
-   * Requirement: Reading Quiz AND Lab must be checked.
-   */
-  function isEligible(lesson) {
-    return Boolean(lesson.readingQuiz && lesson.lab);
+  function checkLessonStatus(l) {
+    return Boolean(checkEligibility(l) && l.terminalQuiz);
   }
 
-  /**
-   * A lesson is complete when all three tasks are done.
-   */
-  function isFullyComplete(lesson) {
-    return Boolean(lesson.readingQuiz && lesson.lab && lesson.discussion);
-  }
-
-  // ----------------------------------------------------
-  // Analytics & Metrics Recalculation
-  // ----------------------------------------------------
   function updateMetrics() {
-    let completedCount = 0;
-    let eligibleCount = 0;
-    const total = lessons.length;
+    let completed = 0;
+    let eligible = 0;
 
-    for (let i = 0; i < total; i++) {
-      if (isFullyComplete(lessons[i])) {
-        completedCount++;
-      }
-      if (isEligible(lessons[i])) {
-        eligibleCount++;
-      }
+    for (let i = 0; i < lessons.length; i++) {
+      if (checkLessonStatus(lessons[i])) completed++;
+      if (checkEligibility(lessons[i])) eligible++;
     }
 
-    const percentage = Math.round((completedCount / total) * 100);
-
-    completedCountEl.textContent = completedCount;
-    eligibleCountEl.textContent = eligibleCount;
-    completionPercentageEl.textContent = `${percentage}%`;
-    progressBarEl.style.width = `${percentage}%`;
+    const pct = Math.round((completed / lessons.length) * 100);
+    completedCountEl.textContent = completed;
+    eligibleCountEl.textContent = eligible;
+    completionPercentageEl.textContent = `${pct}%`;
+    progressBarEl.style.width = `${pct}%`;
   }
 
-  // ----------------------------------------------------
-  // Dynamic DOM Rendering
-  // ----------------------------------------------------
   function render() {
     updateMetrics();
 
-    // Filter and search pipeline
-    const filtered = lessons.filter(lesson => {
-      // Filter logic
-      if (currentFilter === "eligible" && !isEligible(lesson)) return false;
-      if (currentFilter === "pending" && isFullyComplete(lesson)) return false;
+    const filtered = lessons.filter(l => {
+      const isEligible = checkEligibility(l);
+      const isComplete = checkLessonStatus(l);
 
-      // Search query logic
+      if (currentFilter === "eligible" && !isEligible) return false;
+      if (currentFilter === "completed" && !isComplete) return false;
+      if (currentFilter === "incomplete" && isComplete) return false;
+
       if (searchQuery !== "") {
-        return lesson.title.toLowerCase().includes(searchQuery);
+        return l.title.toLowerCase().includes(searchQuery);
       }
       return true;
     });
@@ -137,80 +109,68 @@ document.addEventListener("DOMContentLoaded", function () {
     tableBody.innerHTML = "";
 
     if (filtered.length === 0) {
-      tableBody.innerHTML = `
-        <tr>
-          <td colspan="5" class="empty-state">No matching lessons found.</td>
-        </tr>
-      `;
+      tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">No matching lessons found.</td></tr>`;
       return;
     }
 
-    filtered.forEach(lesson => {
-      const eligible = isEligible(lesson);
-      const row = document.createElement("tr");
+    filtered.forEach(l => {
+      const isEligible = checkEligibility(l);
+      const isComplete = checkLessonStatus(l);
 
-      row.innerHTML = `
-        <td class="cell-lesson-title"><strong>${lesson.title}</strong></td>
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="cell-lesson-title"><strong>${l.title}</strong></td>
         <td>
-          <input 
-            type="checkbox" 
-            class="task-check" 
-            data-id="${lesson.id}" 
-            data-key="readingQuiz" 
-            ${lesson.readingQuiz ? "checked" : ""}
-          >
+          <input type="checkbox" class="task-check" data-id="${l.id}" data-key="readingQuiz" ${l.readingQuiz ? "checked" : ""}>
         </td>
         <td>
-          <input 
-            type="checkbox" 
-            class="task-check" 
-            data-id="${lesson.id}" 
-            data-key="lab" 
-            ${lesson.lab ? "checked" : ""}
-          >
+          <input type="checkbox" class="task-check" data-id="${l.id}" data-key="lab" ${l.lab ? "checked" : ""}>
         </td>
         <td>
-          <input 
-            type="checkbox" 
-            class="task-check" 
-            data-id="${lesson.id}" 
-            data-key="discussion" 
-            ${lesson.discussion ? "checked" : ""}
-          >
+          <input type="checkbox" class="task-check" data-id="${l.id}" data-key="discussion" ${l.discussion ? "checked" : ""}>
         </td>
         <td>
-          <span class="status-pill ${eligible ? "pill-eligible" : "pill-locked"}">
-            ${eligible ? "Eligible" : "Locked"}
+          <span class="status-pill ${isEligible ? "pill-eligible" : "pill-locked"}">
+            ${isEligible ? "Eligible" : "Locked"}
+          </span>
+        </td>
+        <td>
+          <input type="checkbox" class="task-check" data-id="${l.id}" data-key="terminalQuiz" 
+            ${l.terminalQuiz ? "checked" : ""} 
+            ${!isEligible ? "disabled" : ""}>
+        </td>
+        <td>
+          <span class="status-pill ${isComplete ? "pill-complete" : "pill-progress"}">
+            ${isComplete ? "Completed" : "In Progress"}
           </span>
         </td>
       `;
-
-      tableBody.appendChild(row);
+      tableBody.appendChild(tr);
     });
   }
 
-  // ----------------------------------------------------
-  // Event Delegation for Table Checkboxes
-  // ----------------------------------------------------
-  tableBody.addEventListener("change", function (event) {
-    if (event.target.classList.contains("task-check")) {
-      const checkbox = event.target;
-      const lessonId = parseInt(checkbox.dataset.id, 10);
-      const taskKey = checkbox.dataset.key;
+  // Event Delegation: Save on every click
+  tableBody.addEventListener("change", function (e) {
+    if (e.target.classList.contains("task-check")) {
+      const id = parseInt(e.target.dataset.id, 10);
+      const key = e.target.dataset.key;
+      const lesson = lessons.find(item => item.id === id);
 
-      // Locate target lesson in state
-      const targetLesson = lessons.find(item => item.id === lessonId);
-      if (targetLesson) {
-        targetLesson[taskKey] = checkbox.checked;
-        saveLessons(lessons);
-        render(); // Re-render to update badges and metric deck
+      if (lesson) {
+        lesson[key] = e.target.checked;
+
+        // If prerequisite unchecked, lock terminal quiz
+        if (!checkEligibility(lesson)) {
+          lesson.terminalQuiz = false;
+        }
+
+        saveStudentData();
+        render();
       }
     }
   });
 
-  // ----------------------------------------------------
-  // Controls & Interactions
-  // ----------------------------------------------------
+  // Filter and Search Event Handlers
   filterBtns.forEach(btn => {
     btn.addEventListener("click", () => {
       filterBtns.forEach(b => b.classList.remove("active"));
@@ -220,7 +180,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  searchInput.addEventListener("input", (e) => {
+  searchInput.addEventListener("input", e => {
     searchQuery = e.target.value.toLowerCase().trim();
     render();
   });
